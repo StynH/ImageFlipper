@@ -95,6 +95,7 @@ fn get_image_format(format: &str) -> Option<ImageFormat>{
         "bmp" => Some(ImageFormat::Bmp),
         "tiff" | "tif" => Some(ImageFormat::Tiff),
         "gif" => Some(ImageFormat::Gif),
+        "ico" => Some(ImageFormat::Ico),
         _ => {
             eprintln!("ImageFlipper: [Unable to convert to '{}', this format is unsupported.]", format);
             None
