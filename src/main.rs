@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use clap::{Parser};
 use image::{DynamicImage, ImageError, ImageFormat};
 use image::io::{Reader as ImageReader};
+use rayon::prelude::*;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -33,25 +34,28 @@ fn main() {
                 handle_folder(&folder, &extension, &args.to);
             }
             None => {
-                eprintln!("Expecting --from argument specifying extensions to convert from.");
+                eprintln!("ImageFlipper: [Expecting --from argument specifying extensions to convert from.]");
             }
         }
     }
 }
 
 fn handle_folder(folder: &str, from: &str, to: &str) {
-    let entries = fs::read_dir(folder).expect(&*format!("Failed to read directory: {folder}"));
+    let entries = fs::read_dir(folder)
+        .unwrap_or_else(|err| {
+            eprintln!("ImageFlipper: [Failed to read directory: {}]", err);
+            std::process::exit(1);
+        })
+        .map(|res| res.unwrap())
+        .collect::<Vec<_>>();
 
-    for entry in entries{
-        if let Ok(entry) = entry{
-            let path = entry.path();
-            if path.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some(&*from) {
-                let path_string = path.to_str().unwrap();
-                handle_image_file(path_string, to);
-            }
+    entries.par_iter().for_each(|entry|{
+        let path = entry.path();
+        if path.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some(&*from) {
+            let path_string = path.to_str().unwrap();
+            handle_image_file(path_string, to);
         }
-    }
-
+    });
 }
 
 fn handle_image_file(file: &str, to: &str) {
@@ -60,7 +64,7 @@ fn handle_image_file(file: &str, to: &str) {
             convert_image(&file, &image, &to);
         }
         Err(e) => {
-            eprintln!("Failed to load image: {}", e);
+            eprintln!("ImageFlipper: [Failed to load image: {}]", e);
         }
     }
 }
@@ -73,10 +77,12 @@ fn convert_image(file: &str, image: &DynamicImage, to: &str) {
     let image_format = get_image_format(to);
     match image_format {
         Some(format) => {
-            image.save_with_format(path_buf, format).expect(&*format!("Error when converting file: {file}"));
+            println!("{}", format!("ImageFlipper: [Converting image {} to {}]", file, to));
+            let rgb_image = image.to_rgb8();
+            rgb_image.save_with_format(path_buf, format).expect(&*format!("ImageFlipper: [Error when converting file: {file}]"));
         }
         _ => {
-            eprintln!("Unable to save image.");
+            eprintln!("ImageFlipper: [Unable to save image.]");
         }
     }
 }
@@ -90,7 +96,7 @@ fn get_image_format(format: &str) -> Option<ImageFormat>{
         "tiff" | "tif" => Some(ImageFormat::Tiff),
         "gif" => Some(ImageFormat::Gif),
         _ => {
-            eprintln!("Unable to convert to '{}', this format is unsupported.", format);
+            eprintln!("ImageFlipper: [Unable to convert to '{}', this format is unsupported.]", format);
             None
         }
     }
