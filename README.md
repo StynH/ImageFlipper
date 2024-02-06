@@ -1,4 +1,4 @@
-# ![icon](https://raw.github.com/stynh/ImageFlipper/master/icon.png) ImageFlipper
+# ![icon](https://raw.github.com/stynh/ImageFlipper/master/icon.png)
 Example usage on a folder:
 ```
 ./ImageFlipper.exe --folder "C:/MyFolder" --from "jpg" --to "png"
