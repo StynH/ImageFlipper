@@ -11,22 +11,28 @@ use rayon::prelude::*;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
+    ///Name of a single file to convert. (This or --folder is required.)
     #[arg(long)]
     file: Option<String>,
 
+    ///Directory to convert images in. (This or --file is required.)
     #[arg(long)]
     folder: Option<String>,
 
-    #[arg(long)]
+    ///Output folder (Optional)
+    #[arg(long, short)]
     output: Option<String>,
 
+    ///Image format to convert all images in folder from. (Optional)
     #[arg(long)]
     from: Option<String>,
 
-    #[arg(long)]
+    ///Image format to convert to.
+    #[arg(long, short)]
     to: String,
 
-    #[arg(long, default_value_t = false)]
+    ///Convert all images that are not the target format. (Optional)
+    #[arg(long, short, default_value_t = false)]
     all: bool
 }
 
