@@ -5,7 +5,7 @@ Example usage on a folder:
 ```
 Converting all images that are not the target format:
 ```
-./ImageFlipper.exe --folder "C:/MyFolder" -all --to "png"
+./ImageFlipper.exe --folder "C:/MyFolder" --all --to "png"
 ```
 Or for a single file:
 ```
