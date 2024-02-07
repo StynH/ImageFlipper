@@ -1,4 +1,5 @@
 use std::fs;
+use std::fs::DirEntry;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicU16;
 use std::sync::atomic::Ordering::SeqCst;
@@ -21,6 +22,9 @@ struct Args {
 
     #[arg(long)]
     to: String,
+
+    #[arg(long, default_value_t = false)]
+    all: bool
 }
 
 fn main() {
@@ -31,6 +35,11 @@ fn main() {
     }
 
     if let Some(folder) = args.folder{
+        if args.all {
+            handle_folder_all(&folder, &args.to);
+            return;
+        }
+
         match args.from {
             Some(extension) => {
                 handle_folder(&folder, &extension, &args.to);
@@ -42,6 +51,23 @@ fn main() {
     }
 }
 
+fn handle_folder_all(folder: &str, to: &str){
+    let entries = fs::read_dir(folder)
+        .unwrap_or_else(|err| {
+            eprintln!("ImageFlipper: [Failed to read directory: {}]", err);
+            std::process::exit(1);
+        })
+        .map(|res| res.unwrap())
+        .filter(|entry|
+            entry.path().is_file() &&
+            entry.path().extension().and_then(|ext| ext.to_str()) != Some(&*to) &&
+            is_image_format(entry.path().extension().and_then(|ext| ext.to_str()))
+        )
+        .collect::<Vec<_>>();
+
+    handle_image_files(&entries, to);
+}
+
 fn handle_folder(folder: &str, from: &str, to: &str) {
     let entries = fs::read_dir(folder)
         .unwrap_or_else(|err| {
@@ -51,10 +77,14 @@ fn handle_folder(folder: &str, from: &str, to: &str) {
         .map(|res| res.unwrap())
         .filter(|entry|
             entry.path().is_file() &&
-            entry.path().extension().and_then(|ext| ext.to_str()) == Some(&*from))
+                entry.path().extension().and_then(|ext| ext.to_str()) == Some(&*from))
         .collect::<Vec<_>>();
 
-    let mut counter = AtomicU16::new(0);
+    handle_image_files(&entries, to);
+}
+
+fn handle_image_files(entries: &Vec<DirEntry>, to: &str) {
+    let counter = AtomicU16::new(0);
     let item_total_count = entries.len();
     entries.par_iter().for_each(|entry|{
         counter.fetch_add(1, SeqCst);
@@ -63,6 +93,23 @@ fn handle_folder(folder: &str, from: &str, to: &str) {
         let path_string = path.to_str().unwrap();
         handle_image_file(path_string, to, item_current_count, item_total_count as u16);
     });
+}
+
+fn is_image_format(extension: Option<&str>) -> bool {
+    match extension {
+        Some(ext) => {
+            ext == "png" ||
+            ext == "jpg" || ext == "jpeg" ||
+            ext == "webp" ||
+            ext == "bmp" ||
+            ext == "tiff" || ext == "tif" ||
+            ext == "gif" ||
+            ext == "ico"
+        }
+        _ => {
+            false
+        }
+    }
 }
 
 fn handle_image_file(file: &str, to: &str, item_current_count: u16, item_total_count: u16) {
