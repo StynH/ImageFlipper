@@ -10,6 +10,7 @@ use rayon::prelude::*;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
+#[group(required = true, args = ["file", "folder"], multiple = false)]
 struct Args {
     ///Name of a single file to convert. (This or --folder is required.)
     #[arg(long)]
