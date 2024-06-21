@@ -108,6 +108,8 @@ fn handle_image_files(entries: &Vec<DirEntry>, to: &str, output_folder: &Option<
 fn is_image_format(extension: Option<&str>) -> bool {
     match extension {
         Some(ext) => {
+            ext == "tga" ||
+            ext == "dds" ||
             ext == "png" ||
             ext == "jpg" || ext == "jpeg" ||
             ext == "webp" ||
@@ -163,6 +165,8 @@ fn convert_image(file: &str, image: &DynamicImage, to: &str, item_current_count:
 
 fn get_image_format(format: &str) -> Option<ImageFormat>{
     match format {
+        "tga" => Some(ImageFormat::Tga),
+        "dds" => Some(ImageFormat::Dds),
         "png" => Some(ImageFormat::Png),
         "jpeg" | "jpg" => Some(ImageFormat::Jpeg),
         "webp" => Some(ImageFormat::WebP),
